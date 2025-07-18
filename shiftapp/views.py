@@ -12,6 +12,7 @@ from .serializer import MemberSerializer, ShiftSerializer, StaffShiftSerializer,
 class MemberViewSet(ModelViewSet):
     queryset = Members.objects.all()
     serializer_class = MemberSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -41,13 +42,13 @@ class MemberViewSet(ModelViewSet):
 class ShiftViewSet(ModelViewSet):
     queryset = Shift.objects.all()
     serializer_class = ShiftSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminOrReadyOnly]
 
 
 class StaffShiftViewSet(ModelViewSet):
     queryset = StaffShift.objects.all()
     serializer_class = StaffShiftSerializer
-    permission_classes = [IsAdminOrReadyOnly]
+    permission_classes = [IsAuthenticated, IsAdminOrReadyOnly]
 
 
 class LeaveRequestViewSet(ModelViewSet):
@@ -59,19 +60,19 @@ class LeaveRequestViewSet(ModelViewSet):
         user = self.request.user
         if user.is_staff:
             return LeaveBalance.objects.all()
-        return LeaveBalance.objects.get(id=user.id)
+        return LeaveBalance.objects.filter(id=user.id)
 
 
 class LeaveBalanceViewSet(ModelViewSet):
     queryset = LeaveBalance.objects.all()
     serializer_class = LeaveBalanceSerializer
-    permission_classes = [IsAdminOrReadyOnly]
+    permission_classes = [IsAuthenticated, IsAdminOrReadyOnly]
 
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
             return LeaveBalance.objects.all()
-        return LeaveBalance.objects.get(id=user.id)
+        return LeaveBalance.objects.filter(id=user.id).first()
     
 
 class WageViewSet(ModelViewSet):
@@ -83,4 +84,4 @@ class WageViewSet(ModelViewSet):
         user = self.request.user
         if user.is_staff:
             return LeaveBalance.objects.all()
-        return LeaveBalance.objects.get(id=user.id)
+        return LeaveBalance.objects.filter(id=user.id)

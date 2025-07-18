@@ -1,23 +1,18 @@
-"""
-URL configuration for shift project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from shiftapp.views import MemberViewSet, ShiftViewSet, StaffShiftViewSet, LeaveRequestViewSet, LeaveBalanceViewSet, WageViewSet
+
+router = DefaultRouter()
+router.register('member', MemberViewSet, basename='member')
+router.register('shift', ShiftViewSet, basename='shift')
+router.register('staffshift', StaffShiftViewSet, basename='staffshift')
+router.register('leaverequest', LeaveRequestViewSet, basename='leaverequest')
+router.register('leavebalance', LeaveBalanceViewSet, basename='leavebalance')
+router.register('wage', WageViewSet, basename='wage')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include(router.urls)),
 ]

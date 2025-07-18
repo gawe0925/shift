@@ -24,7 +24,7 @@ class Members(AbstractUser):
     permanent_position = models.BooleanField(default=False)
     part_time_rate = models.DecimalField(blank=True, decimal_places=2, default=1.0, max_digits=5)
     position_type = models.CharField(choices=POSITION_TYPES, default='casual', max_length=50)
-    start_date = models.DateField()
+    start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
     USERNAME_FIELD = 'email'
@@ -42,8 +42,8 @@ Thus, StaffShift Model is to connect Members + Shift and use date to identify ea
 """
 class Shift(models.Model):
     name = models.CharField(blank=True, max_length=50)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
     short_break = models.DurationField(default=timedelta(minutes=15))
     regular_break = models.DurationField(default=timedelta(minutes=30))
 
@@ -74,8 +74,8 @@ class LeaveRequest(models.Model):
 
     staff = models.ForeignKey(Members, on_delete=models.CASCADE)
     leave_type = models.CharField(choices=LEAVE_TYPES, max_length=20)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     leave_hours = models.DecimalField(decimal_places=2, default=0.0, max_digits=5)
     reason = models.TextField(blank=True)
     status = models.CharField(choices=STATUS_CHOICES, default='pending', max_length=10)
@@ -173,7 +173,7 @@ class Wage(models.Model):
 
     staff = models.ForeignKey(Members, on_delete=models.CASCADE)
     shift = models.ForeignKey(StaffShift, on_delete=models.CASCADE)
-    start_date = models.DateField()
+    start_date = models.DateField(null=True, blank=True)
     pay_duration = models.CharField(choices=DURATION, default='fortnight', max_length=10)
     pay_rate = models.DecimalField(decimal_places=2, default=26.55, max_digits=5)
 
