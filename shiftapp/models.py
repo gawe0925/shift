@@ -30,6 +30,13 @@ class Members(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
+    # reserved fields for potential future expansion
+    undefined_1 = models.CharField(blank=True, max_length=200)
+    undefined_2 = models.CharField(blank=True, max_length=200)
+    undefined_3 = models.CharField(blank=True, max_length=200)
+    undefined_4 = models.CharField(blank=True, max_length=200)
+    undefined_5 = models.CharField(blank=True, max_length=200)
+
 
     def __str__(self):
         return f"{self.first_name} + ' ' + {self.last_name}"
@@ -47,12 +54,26 @@ class Shift(models.Model):
     short_break = models.DurationField(default=timedelta(minutes=15))
     regular_break = models.DurationField(default=timedelta(minutes=30))
 
+    # reserved fields for potential future expansion
+    undefined_1 = models.CharField(blank=True, max_length=200)
+    undefined_2 = models.CharField(blank=True, max_length=200)
+    undefined_3 = models.CharField(blank=True, max_length=200)
+    undefined_4 = models.CharField(blank=True, max_length=200)
+    undefined_5 = models.CharField(blank=True, max_length=200)
+
 
 class StaffShift(models.Model):
     shift_date = models.DateField()
     staff = models.ForeignKey(Members, on_delete=models.CASCADE)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
     alternative_staff = models.ForeignKey(Members, on_delete=models.SET_NULL, null=True, blank=True, related_name='cover_shift')
+
+    # reserved fields for potential future expansion
+    undefined_1 = models.CharField(blank=True, max_length=200)
+    undefined_2 = models.CharField(blank=True, max_length=200)
+    undefined_3 = models.CharField(blank=True, max_length=200)
+    undefined_4 = models.CharField(blank=True, max_length=200)
+    undefined_5 = models.CharField(blank=True, max_length=200)
 
 
 class LeaveRequest(models.Model):
@@ -82,6 +103,13 @@ class LeaveRequest(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     reviewed_by = models.ForeignKey(Members, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_leaves')
+
+    # reserved fields for potential future expansion
+    undefined_1 = models.CharField(blank=True, max_length=200)
+    undefined_2 = models.CharField(blank=True, max_length=200)
+    undefined_3 = models.CharField(blank=True, max_length=200)
+    undefined_4 = models.CharField(blank=True, max_length=200)
+    undefined_5 = models.CharField(blank=True, max_length=200)
 
     def __str__(self):
         return f"{self.staff} - {self.leave_type} ({self.start_date} ~ {self.end_date})"
@@ -116,6 +144,13 @@ class LeaveBalance(models.Model):
     staff = models.OneToOneField(Members, on_delete=models.CASCADE)
     annual_leave_used = models.DecimalField(decimal_places=2, default=0.0, max_digits=5)
     sick_leave_used = models.DecimalField(decimal_places=2, default=0.0, max_digits=5)
+
+    # reserved fields for potential future expansion
+    undefined_1 = models.CharField(blank=True, max_length=200)
+    undefined_2 = models.CharField(blank=True, max_length=200)
+    undefined_3 = models.CharField(blank=True, max_length=200)
+    undefined_4 = models.CharField(blank=True, max_length=200)
+    undefined_5 = models.CharField(blank=True, max_length=200)
 
     def get_available_annual_leave_hours(self):
         """
@@ -176,6 +211,13 @@ class Wage(models.Model):
     start_date = models.DateField(null=True, blank=True)
     pay_duration = models.CharField(choices=DURATION, default='fortnight', max_length=10)
     pay_rate = models.DecimalField(decimal_places=2, default=26.55, max_digits=5)
+
+    # reserved fields for potential future expansion
+    undefined_1 = models.CharField(blank=True, max_length=200)
+    undefined_2 = models.CharField(blank=True, max_length=200)
+    undefined_3 = models.CharField(blank=True, max_length=200)
+    undefined_4 = models.CharField(blank=True, max_length=200)
+    undefined_5 = models.CharField(blank=True, max_length=200)
 
     @property
     def end_date(self):
