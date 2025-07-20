@@ -55,7 +55,7 @@ class ShiftViewSet(ModelViewSet):
 
 
 class StaffShiftViewSet(ModelViewSet):
-    queryset = StaffShift.objects.prefetch_related('member', 'shift').all()
+    queryset = StaffShift.objects.select_related('member', 'shift').all()
     serializer_class = StaffShiftSerializer
     permission_classes = [IsAuthenticated, IsAdminOrReadyOnly]
 

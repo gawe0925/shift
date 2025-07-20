@@ -39,7 +39,8 @@ class Members(AbstractUser):
 
 
     def __str__(self):
-        return f"{self.first_name} + ' ' + {self.last_name}"
+        name = f"{self.first_name} {self.last_name}".strip()
+        return name if name else self.email
 
 
 """
@@ -48,11 +49,23 @@ some business might have separate shifts within one day, list restaurants, hotel
 Thus, StaffShift Model is to connect Members + Shift and use date to identify each shift.
 """
 class Shift(models.Model):
-    name = models.CharField(blank=True, max_length=50)
+
+    BREAK_CHOICES = [
+        ('none', 'No Break'),
+        ('15min', 'Break 15 Minutes'),
+        ('30min', 'Break 30 Minutes'),
+    ]
+
+    BREAK_OPTIONS = {
+        'none': timedelta(minutes=0),
+        '15min': timedelta(minutes=15),
+        '30min': timedelta(minutes=30)
+    }
+
+    shift_name = models.CharField(blank=True, max_length=50)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
-    short_break = models.DurationField(default=timedelta(minutes=15))
-    regular_break = models.DurationField(default=timedelta(minutes=30))
+    break_min = models.CharField(choices=BREAK_CHOICES, default='none', max_length=10)
 
     # reserved fields for potential future expansion
     undefined_1 = models.CharField(blank=True, max_length=200)
@@ -61,11 +74,19 @@ class Shift(models.Model):
     undefined_4 = models.CharField(blank=True, max_length=200)
     undefined_5 = models.CharField(blank=True, max_length=200)
 
+    @property
+    def break_time(self):
+        return self.BREAK_OPTIONS[self.break_min]
+    
+    def __str__(self):
+        return f"{self.name} ({self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')}, {self.get_break_min_display()})"
+
 
 class StaffShift(models.Model):
     shift_date = models.DateField()
     staff = models.ForeignKey(Members, on_delete=models.CASCADE)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
+    cover_shift = models.BooleanField(default=False)
     alternative_staff = models.ForeignKey(Members, on_delete=models.SET_NULL, null=True, blank=True, related_name='cover_shift')
 
     # reserved fields for potential future expansion

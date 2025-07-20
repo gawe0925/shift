@@ -3,17 +3,29 @@ from .models import Members, Shift, StaffShift, LeaveRequest, LeaveBalance, Wage
 
 
 class MemberSerializer(serializers.ModelSerializer):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        request = self.context.get('request', None)
+        user = request.user
+        part_time_staff = Members.objects.filter(id=user.id, position_type='part').first()
+
+        if not part_time_staff:
+            self.fields.pop('part_time_rate', None)
     
     class Meta:
         model = Members
-        fields = []
+        fields = ['first_name', 'last_name', 'email', 'mobile',
+                  'permanent_position', 'part_time_rate', 'position_type',]
 
 
 class ShiftSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shift
-        fields = []
+        fields = ['name', 'start_time', 'end_time', 'short_break', 
+                  'regular_break', ]
 
 
 class StaffShiftSerializer(serializers.ModelSerializer):
