@@ -2,6 +2,7 @@ from django.conf import settings
 from rest_framework import status
 from django.core.mail import send_mail
 from rest_framework.views import APIView
+from datetime import datetime, timedelta
 from django.utils.encoding import force_str
 from rest_framework.response import Response
 from django.utils.encoding import force_bytes
@@ -55,7 +56,7 @@ class ShiftViewSet(ModelViewSet):
 
 
 class StaffShiftViewSet(ModelViewSet):
-    queryset = StaffShift.objects.select_related('member', 'shift').all()
+    queryset = StaffShift.objects.select_related('staff', 'shift', 'alternative_staff').all()
     serializer_class = StaffShiftSerializer
     permission_classes = [IsAuthenticated, IsAdminOrReadyOnly]
 
@@ -92,8 +93,66 @@ class WageViewSet(ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return LeaveBalance.objects.all()
-        return LeaveBalance.objects.filter(id=user.id)
+            return Wage.objects.all()
+        return Wage.objects.filter(id=user.id)
+    
+    def create(self, *args, **kwargs):
+
+        def str_to_date(string):
+            return datetime.strptime(string, "%Y-%m-%d").date()
+
+        def end_date(start_date, dura):
+            if dura == 'week':
+                return (start_date + timedelta(6)).date()
+            elif dura == 'fort':
+                return (start_date + timedelta(13)).date()
+            else:
+                # for monthly payment
+                small = [4, 6, 9, 11]
+                big = [1, 3, 5, 7, 8, 10, 12]
+
+                if start_date.month in big:
+                    return (start_date + timedelta(30)).date()
+                elif start_date.month in small:
+                    return (start_date + timedelta(29)).date()
+                else:
+                    return (start_date + timedelta(27)).date()
+        
+        today = datetime.today().date()
+        data = self.request.data
+        data_copy = data.copy()
+        start_day = data.get('start_date', None)
+        if start_day:
+            start_day = str_to_date(start_day)
+        end_day = data.get('end_day', None)
+        if end_day:
+            end_day = str_to_date(end_day)
+            if end_day > today:
+                return Response('message: End_day greater than today', status=400)
+
+        duration = data.get('pay_duration', None)
+        staff = self.request.user
+        if start_day and duration:
+            end_day = end_date(start_day, duration)
+
+        total_shifts = StaffShift.objects.select_related('shift', 'staff', 
+                                                         'alternative_staff'
+                                                         ).filter(staff=staff, 
+                                                            shift_date__gte=start_day, 
+                                                            shift_date__lte=end_day
+                                                            ).exclude(cover_shift=True)
+        
+        total_shifts = None
+        if not total_shifts:
+            data_copy['wage'] = 0
+            data_copy['staff'] = staff.__str__()
+            return Response(data_copy)
+        for s in total_shifts:
+            dhs = s.shift.daily_work_hours()
+            pay_rate = s._wage_set().first().pay_rate
+        
+
+        return Response(data)
 
 
 # use email to change and verify password 

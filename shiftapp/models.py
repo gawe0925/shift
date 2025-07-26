@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.db import models
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 
 from django.contrib.auth.models import AbstractUser
 
@@ -10,7 +10,8 @@ class Members(AbstractUser):
     POSITION_TYPES = [
         ('full', 'Full Time'),
         ('part', 'Part Time'),
-        ('casual', 'Casual')
+        ('casual', 'Casual'),
+        ('admin', 'admin')
     ]
 
     gender = models.CharField(blank=False, max_length=50)
@@ -26,6 +27,7 @@ class Members(AbstractUser):
     position_type = models.CharField(choices=POSITION_TYPES, default='casual', max_length=50)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    pay_rate = models.DecimalField(decimal_places=2, default=26.55, max_digits=5)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -74,12 +76,28 @@ class Shift(models.Model):
     undefined_4 = models.CharField(blank=True, max_length=200)
     undefined_5 = models.CharField(blank=True, max_length=200)
 
+    def daily_work_duration(self):
+        if self.start_time and self.end_time:
+            # 先算時間差
+            start_t = datetime.combine(datetime.min, self.start_time)
+            end_t = datetime.combine(datetime.min, self.end_time)
+            work_time = end_t - start_t
+            # 減掉休息時間
+            work_time -= self.break_time
+            return work_time if work_time > timedelta(0) else timedelta(0)
+        return timedelta(0)
+
     @property
     def break_time(self):
         return self.BREAK_OPTIONS[self.break_min]
     
+    def daily_work_hours(self):
+        # 以小時為單位 (浮點數)
+        td = self.daily_work_duration()
+        return Decimal(td.total_seconds() / 3600)
+    
     def __str__(self):
-        return f"{self.name} ({self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')}, {self.get_break_min_display()})"
+        return f"{self.shift_name} ({self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')}, {self.get_break_min_display()})"
 
 
 class StaffShift(models.Model):
@@ -88,6 +106,7 @@ class StaffShift(models.Model):
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
     cover_shift = models.BooleanField(default=False)
     alternative_staff = models.ForeignKey(Members, on_delete=models.SET_NULL, null=True, blank=True, related_name='cover_shift')
+    has_payslip = models.BooleanField(default=False)
 
     # reserved fields for potential future expansion
     undefined_1 = models.CharField(blank=True, max_length=200)
@@ -96,6 +115,15 @@ class StaffShift(models.Model):
     undefined_4 = models.CharField(blank=True, max_length=200)
     undefined_5 = models.CharField(blank=True, max_length=200)
 
+    def staff_position(self):
+        if self.staff:
+            if self.staff.position_type == 'full' and self.staff.is_staff:
+                return f'Manager'
+            elif self.staff.position_type == 'part':
+                return f'{self.staff.position_type} {round(self.staff.part_time_rate, 1)}'
+            else:
+                return f'{self.staff.position_type}'
+            
 
 class LeaveRequest(models.Model):
     LEAVE_TYPES = [
@@ -220,18 +248,11 @@ class LeaveBalance(models.Model):
     
 
 class Wage(models.Model):
-
-    DURATION = [
-        ('week', 'Weekly'),
-        ('fort', 'Fortnightly'),
-        ('mon', 'Monthly'),
-    ]
-
     staff = models.ForeignKey(Members, on_delete=models.CASCADE)
     shift = models.ForeignKey(StaffShift, on_delete=models.CASCADE)
-    start_date = models.DateField(null=True, blank=True)
-    pay_duration = models.CharField(choices=DURATION, default='fortnight', max_length=10)
-    pay_rate = models.DecimalField(decimal_places=2, default=26.55, max_digits=5)
+    shift_date = models.DateField(null=True, blank=True)
+    pay_date = models.DateField(null=True, blank=True)
+    salary = models.DecimalField(decimal_places=2, default=0, max_digits=5)
 
     # reserved fields for potential future expansion
     undefined_1 = models.CharField(blank=True, max_length=200)
@@ -239,21 +260,3 @@ class Wage(models.Model):
     undefined_3 = models.CharField(blank=True, max_length=200)
     undefined_4 = models.CharField(blank=True, max_length=200)
     undefined_5 = models.CharField(blank=True, max_length=200)
-
-    @property
-    def end_date(self):
-        if self.pay_duration == 'week':
-            return self.start_date + timedelta(6)
-        elif self.pay_duration == 'fort':
-            return self.start_date + timedelta(13)
-        else:
-            # for monthly payment
-            small = [4, 6, 9, 11]
-            big = [1, 3, 5, 7, 8, 10, 12]
-
-            if self.start_date.month in big:
-                return self.start_date + timedelta(30)
-            elif self.start_date.month in small:
-                return self.start_date + timedelta(29)
-            else:
-                return self.start_date + timedelta(27)
