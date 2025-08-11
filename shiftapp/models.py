@@ -28,6 +28,7 @@ class Members(AbstractUser):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     pay_rate = models.DecimalField(decimal_places=2, default=26.55, max_digits=5)
+    is_active = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -124,6 +125,9 @@ class StaffShift(models.Model):
             else:
                 return f'{self.staff.position_type}'
             
+    def __str__(self):
+        return f"shift_date: {self.shift_date} - {self.shift}"
+
 
 class LeaveRequest(models.Model):
     LEAVE_TYPES = [
@@ -146,8 +150,8 @@ class LeaveRequest(models.Model):
     leave_type = models.CharField(choices=LEAVE_TYPES, max_length=20)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
-    leave_hours = models.DecimalField(decimal_places=2, default=0.0, max_digits=5)
-    reason = models.TextField(blank=True)
+    leave_hours = models.DecimalField(decimal_places=2, default=Decimal('0.0'), max_digits=5)
+    reason = models.TextField(null=True, blank=True)
     status = models.CharField(choices=STATUS_CHOICES, default='pending', max_length=10)
     requested_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -191,8 +195,8 @@ class LeaveRequest(models.Model):
 
 class LeaveBalance(models.Model):
     staff = models.OneToOneField(Members, on_delete=models.CASCADE)
-    annual_leave_used = models.DecimalField(decimal_places=2, default=0.0, max_digits=5)
-    sick_leave_used = models.DecimalField(decimal_places=2, default=0.0, max_digits=5)
+    annual_leave_used = models.DecimalField(decimal_places=2, default=Decimal('0.0'), max_digits=5)
+    sick_leave_used = models.DecimalField(decimal_places=2, default=Decimal('0.0'), max_digits=5)
 
     # reserved fields for potential future expansion
     undefined_1 = models.CharField(blank=True, max_length=200)
@@ -212,6 +216,8 @@ class LeaveBalance(models.Model):
         elif self.staff.end_date:
             return Decimal('0.0')
         elif not self.staff.permanent_position:
+            return Decimal('0.0')
+        elif not self.staff.is_active:
             return Decimal('0.0')
 
         today = date.today()
@@ -247,12 +253,20 @@ class LeaveBalance(models.Model):
         return f"{self.staff} - Annual leave hrs:{self.get_available_annual_leave_hours()}, Sick leave hrs:{self.get_available_sick_leave_hours()}"
     
 
+# class TimeLog(models.Model):
+#     staff = models.ForeignKey(Members, on_delete=models.CASCADE)
+    
+
+
+
+
 class Wage(models.Model):
     staff = models.ForeignKey(Members, on_delete=models.CASCADE)
     shift = models.ForeignKey(StaffShift, on_delete=models.CASCADE)
     shift_date = models.DateField(null=True, blank=True)
     pay_date = models.DateField(null=True, blank=True)
-    salary = models.DecimalField(decimal_places=2, default=0, max_digits=5)
+    tax_withheld = models.DecimalField(decimal_places=2, default=Decimal('0.0'), max_digits=5)
+    salary = models.DecimalField(decimal_places=2, default=Decimal('0.0'), max_digits=5)
 
     # reserved fields for potential future expansion
     undefined_1 = models.CharField(blank=True, max_length=200)
@@ -260,3 +274,6 @@ class Wage(models.Model):
     undefined_3 = models.CharField(blank=True, max_length=200)
     undefined_4 = models.CharField(blank=True, max_length=200)
     undefined_5 = models.CharField(blank=True, max_length=200)
+
+    def __str__(self):
+        return f"{self.staff} - {self.shift} - {self.salary}"

@@ -24,7 +24,9 @@ def calculate_daily_salary():
         pay_rate = employee.pay_rate
         if employee.position_type == 'casual':
             pay_rate = employee.pay_rate * casual_rate
-        wage.append(Wage(staff=employee, shift=s, salary=work_hours*pay_rate))
+        wage.append(Wage(staff=employee, shift=s, 
+                         salary=work_hours*pay_rate, 
+                         shift_date=yesterday))
 
     log.info(f"start generate {yesterday}'s Wage")
     Wage.objects.bulk_create(wage)
@@ -32,7 +34,7 @@ def calculate_daily_salary():
     log.info(f"{yesterday}'s wages have been generated")
     
     log.info(f"start mark off {yesterday}'s StaffShift")
-    shifts.bulk_update(has_payslip=True)
+    shifts.update(has_payslip=True)
     print(f"mark off {yesterday}'s StaffShift")
     log.info(f"mark off {yesterday}'s StaffShift")
 

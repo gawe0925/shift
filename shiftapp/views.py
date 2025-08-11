@@ -1,8 +1,11 @@
+import logging as log
+from datetime import datetime
 from django.conf import settings
+from django.db.models import Sum
 from rest_framework import status
+from django.db.models import Max, Min
 from django.core.mail import send_mail
 from rest_framework.views import APIView
-from datetime import datetime, timedelta
 from django.utils.encoding import force_str
 from rest_framework.response import Response
 from django.utils.encoding import force_bytes
@@ -13,10 +16,18 @@ from django.utils.http import urlsafe_base64_decode
 from django.core.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 
+from .utils import calculate_end_date
 from .permissions import IsAdminOrReadyOnly
 from .tokens import FiveMinuteTokenGenerator
 from .models import Members, Shift, StaffShift, LeaveRequest, LeaveBalance, Wage
 from .serializer import MemberSerializer, ShiftSerializer, StaffShiftSerializer, LeaveRequestSerializer, LeaveBalanceSerializer, WageSerializer
+
+# universal function
+def str_to_date(date_str):
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    except:
+        return False
 
 
 class MemberViewSet(ModelViewSet):
@@ -27,27 +38,14 @@ class MemberViewSet(ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return Members.objects.all()
-        return Members.objects.filter(id=user.id).first()
+            if user.is_superuser:
+                return Members.objects.all()
+            return Members.objects.exclude(is_superuser=True)
+        return Members.objects.filter(id=user.id)
 
-    def get_object(self):
-        user = self.request.user
-        obj = super().get_object()
-        # permission control
-        if not user.is_staff and obj != user:
-            raise PermissionDenied('Access Denied')
-        return obj
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
 
-    def partial_update(self, request, *args, **kwargs):
-        # fliter queryset with user's info
-        instance = self.get_object()
-        # partially update request data
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        # if update result is not valid, then raise error message 
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-    
 
 class ShiftViewSet(ModelViewSet):
     queryset = Shift.objects.all()
@@ -69,8 +67,13 @@ class LeaveRequestViewSet(ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return LeaveBalance.objects.all()
-        return LeaveBalance.objects.filter(id=user.id)
+            if user.is_superuser:
+                return LeaveRequest.objects.all()
+            return LeaveRequest.objects.exclude(staff__is_superuser=True)
+        return LeaveRequest.objects.filter(staff__id=user.id)
+    
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
 
 
 class LeaveBalanceViewSet(ModelViewSet):
@@ -82,8 +85,8 @@ class LeaveBalanceViewSet(ModelViewSet):
         user = self.request.user
         if user.is_staff:
             return LeaveBalance.objects.all()
-        return LeaveBalance.objects.filter(id=user.id)
-    
+        return LeaveBalance.objects.filter(staff=user)
+
 
 class WageViewSet(ModelViewSet):
     queryset = Wage.objects.all()
@@ -92,67 +95,68 @@ class WageViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_staff:
-            return Wage.objects.all()
-        return Wage.objects.filter(id=user.id)
+        return Wage.objects.all() if user.is_superuser else Wage.objects.filter(staff=user)
     
-    def create(self, *args, **kwargs):
 
-        def str_to_date(string):
-            return datetime.strptime(string, "%Y-%m-%d").date()
+    def list(self, request, *args, **kwargs):
 
-        def end_date(start_date, dura):
-            if dura == 'week':
-                return (start_date + timedelta(6)).date()
-            elif dura == 'fort':
-                return (start_date + timedelta(13)).date()
-            else:
-                # for monthly payment
-                small = [4, 6, 9, 11]
-                big = [1, 3, 5, 7, 8, 10, 12]
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+        duration = request.query_params.get('duration')
+        staff_id = request.query_params.get('staff_id')
 
-                if start_date.month in big:
-                    return (start_date + timedelta(30)).date()
-                elif start_date.month in small:
-                    return (start_date + timedelta(29)).date()
-                else:
-                    return (start_date + timedelta(27)).date()
-        
-        today = datetime.today().date()
-        data = self.request.data
-        data_copy = data.copy()
-        start_day = data.get('start_date', None)
-        if start_day:
-            start_day = str_to_date(start_day)
-        end_day = data.get('end_day', None)
-        if end_day:
-            end_day = str_to_date(end_day)
-            if end_day > today:
-                return Response('message: End_day greater than today', status=400)
+        start_date = str_to_date(start_date_str)
+        end_date = str_to_date(end_date_str)
 
-        duration = data.get('pay_duration', None)
-        staff = self.request.user
-        if start_day and duration:
-            end_day = end_date(start_day, duration)
+        if not start_date:
+            return Response({'start_date': 'required'}, status=400)
 
-        total_shifts = StaffShift.objects.select_related('shift', 'staff', 
-                                                         'alternative_staff'
-                                                         ).filter(staff=staff, 
-                                                            shift_date__gte=start_day, 
-                                                            shift_date__lte=end_day
-                                                            ).exclude(cover_shift=True)
-        
-        total_shifts = None
-        if not total_shifts:
-            data_copy['wage'] = 0
-            data_copy['staff'] = staff.__str__()
-            return Response(data_copy)
-        for s in total_shifts:
-            dhs = s.shift.daily_work_hours()
-            pay_rate = s._wage_set().first().pay_rate
-        
+        if not end_date and duration:
+            end_date = calculate_end_date(start_date, duration)
 
-        return Response(data)
+        if not end_date:
+            return Response({'end_date': 'required or unable to calculate'}, status=400)
+
+        if request.user.is_superuser and staff_id:
+            queryset = self.get_queryset().filter(
+                shift_date__gte=start_date,
+                shift_date__lte=end_date,
+                staff__id = staff_id
+            )
+
+        else:
+            queryset = self.get_queryset().filter(
+                shift_date__gte=start_date,
+                shift_date__lte=end_date
+            )
+
+        if not queryset:
+            today = datetime.today().date()
+
+            return Response({'search_period': f'from {start_date} to {end_date}',
+                             'messsage': 'No data in selected period',
+                             'valid_date_from': today,
+                             'valid_date_til': today,
+                            }, status=200)
+        else:
+            shift_date_max = str(Wage.objects.aggregate(Max('shift_date'))['shift_date__max'] or '')
+            shift_date_min = str(Wage.objects.aggregate(Min('shift_date'))['shift_date__min'] or '')
+            days = len(queryset)
+
+            if days and days == 1:
+                day_str = f'{days}_day_salary'
+            elif days and days > 1:
+                day_str = f'{days}_days_salary'
+            total_salary = queryset.aggregate(total_salary=Sum('salary'))['total_salary']
+
+            serializer = self.get_serializer(queryset, many=True)
+
+            return Response({'shift_detail': serializer.data,
+                            day_str: round(total_salary, 2),
+                            'search_period': f'from {start_date} to {end_date}',
+                            'valid_date_from': shift_date_min,
+                            'valid_date_til': shift_date_max,
+                            }, status=200)
 
 
 # use email to change and verify password 
