@@ -251,13 +251,6 @@ class LeaveBalance(models.Model):
 
     def __str__(self):
         return f"{self.staff} - Annual leave hrs:{self.get_available_annual_leave_hours()}, Sick leave hrs:{self.get_available_sick_leave_hours()}"
-    
-
-# class TimeLog(models.Model):
-#     staff = models.ForeignKey(Members, on_delete=models.CASCADE)
-    
-
-
 
 
 class Wage(models.Model):

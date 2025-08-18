@@ -27,11 +27,17 @@ class MemberSerializer(serializers.ModelSerializer):
         
 
     def update(self, instance, validated_data):
-        # 防止停用管理員帳戶
+        requested_user = self.context['request'].user
         if 'is_active' in validated_data and validated_data['is_active'] is False:
+            # 防止停用管理員帳戶
             if instance.is_superuser:
                 raise serializers.ValidationError({
                     "is_active": "Cannot deactivate admin accounts"
+                })
+            # 防止經理自己停用自己
+            if instance.is_staff and instance == requested_user:
+                raise serializers.ValidationError({
+                    "is_active": "Cannot deactivate yourself"
                 })
         
         # 允許所有字段更新（移除之前可能的限制）
@@ -58,16 +64,15 @@ class ShiftSerializer(serializers.ModelSerializer):
 class StaffShiftSerializer(serializers.ModelSerializer):
     staff_name = serializers.SerializerMethodField()
     alternative_staff_name = serializers.SerializerMethodField()
-    shift_id = serializers.SerializerMethodField()
-    shift = serializers.StringRelatedField()
+    shift_name = serializers.StringRelatedField()
     class Meta:
         model = StaffShift
-        fields = ['id', "shift_date", "staff", "staff_name", "shift_id", "shift", 
+        fields = ['id', "shift_date", "staff", "staff_name", "shift", "shift_name", 
                   "cover_shift", "alternative_staff", "alternative_staff_name"]
         read_only_fields = ['id']
         
-    def get_shift_id(self, obj):
-        return int(obj.shift.id)
+    def get_shift_name(self, obj):
+        return str(obj.shift)
 
     def get_staff_name(self, obj):
         return str(obj.staff)
@@ -86,24 +91,6 @@ class StaffShiftSerializer(serializers.ModelSerializer):
         return rep
     
     def validate(self, data):
-        shift_id = data.get('shift_id')
-        staff_id = data.get('staff')
-        shift_date = data.get('shift_date')
-
-        if not shift_id:
-            raise serializers.ValidationError({'shift': 'shift is required'})
-        if not staff_id:
-            raise serializers.ValidationError({'staff': 'staff is required'})
-        if not shift_date:
-            raise serializers.ValidationError({'shift_date': 'shift_date is required'})
-        
-        shift_list = Shift.objects.values_list('id', flat=True)
-        staff_list = Members.objects.values_list('id', flat=True)
-
-        if shift_id not in shift_list:
-            raise serializers.ValidationError({'shift': 'shift not exist'})
-        if staff_id not in staff_list:
-            raise serializers.ValidationError({'staff': 'staff not exist'})
 
         cover_shift = data.get('cover_shift')
         if cover_shift:
@@ -112,9 +99,6 @@ class StaffShiftSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'alternative_staff': 'alternative_staff is required'})
         
         return data
-    
-    def create(self, validated_data):
-        return super().create(validated_data)
 
 
 class LeaveRequestSerializer(serializers.ModelSerializer):
