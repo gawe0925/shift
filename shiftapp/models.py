@@ -5,6 +5,40 @@ from datetime import timedelta, date, datetime
 from django.contrib.auth.models import AbstractUser
 
 
+class Stores(models.Model):
+    name = models.CharField(null=True, blank=False, max_length=100)
+    branch_number = models.PositiveIntegerField(unique=True)
+    address = models.CharField(blank=False, max_length=100)
+    email = models.EmailField(unique=True, max_length=100)
+    phone = models.CharField(blank=True, max_length=50)
+    opening_time = models.TimeField()
+    closing_time = models.TimeField()
+
+    # reserved fields for potential future expansion
+    undefined_1 = models.CharField(blank=True, max_length=200)
+    undefined_2 = models.CharField(blank=True, max_length=200)
+    undefined_3 = models.CharField(blank=True, max_length=200)
+    undefined_4 = models.CharField(blank=True, max_length=200)
+    undefined_5 = models.CharField(blank=True, max_length=200)
+
+    def __str__(self):
+        return f'{self.name}({self.branch_number})'
+
+
+class Team(models.Model):
+    name = models.CharField(null=True, blank=True, max_length=50)
+
+    # reserved fields for potential future expansion
+    undefined_1 = models.CharField(blank=True, max_length=200)
+    undefined_2 = models.CharField(blank=True, max_length=200)
+    undefined_3 = models.CharField(blank=True, max_length=200)
+    undefined_4 = models.CharField(blank=True, max_length=200)
+    undefined_5 = models.CharField(blank=True, max_length=200)
+
+    def __str__(self) -> str:
+        return super().__str__()
+
+
 class Members(AbstractUser):
 
     POSITION_TYPES = [
@@ -29,6 +63,9 @@ class Members(AbstractUser):
     end_date = models.DateField(null=True, blank=True)
     pay_rate = models.DecimalField(decimal_places=2, default=26.55, max_digits=5)
     is_active = models.BooleanField(default=True)
+    stores = models.ManyToManyField(Stores, through='StoreMember', related_name='staffs')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True)
+    role = models.CharField(null=True, blank=True, max_length=50)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -44,6 +81,21 @@ class Members(AbstractUser):
     def __str__(self):
         name = f"{self.first_name} {self.last_name}".strip()
         return name if name else self.email
+    
+
+class StoreMember(models.Model):
+    store = models.ForeignKey(Stores, on_delete=models.CASCADE)
+    staff = models.ForeignKey(Members, on_delete=models.CASCADE)
+
+    # reserved fields for potential future expansion
+    undefined_1 = models.CharField(blank=True, max_length=200)
+    undefined_2 = models.CharField(blank=True, max_length=200)
+    undefined_3 = models.CharField(blank=True, max_length=200)
+    undefined_4 = models.CharField(blank=True, max_length=200)
+    undefined_5 = models.CharField(blank=True, max_length=200)
+
+    class Meta:
+        unique_together = ('store', 'staff')
 
 
 """
@@ -64,7 +116,7 @@ class Shift(models.Model):
         '15min': timedelta(minutes=15),
         '30min': timedelta(minutes=30)
     }
-
+    store = models.ForeignKey(Stores, on_delete=models.CASCADE, null=True, blank=True)
     shift_name = models.CharField(blank=True, max_length=50)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
@@ -102,8 +154,14 @@ class Shift(models.Model):
 
 
 class StaffShift(models.Model):
+    '''
+    因為開了第三張來做多店鋪管理
+    員工的班表需要跟店 + 員工連結 
+    所以不再是直接連結到 Members table
+    '''
     shift_date = models.DateField()
-    staff = models.ForeignKey(Members, on_delete=models.CASCADE)
+    # staff = models.ForeignKey(Members, on_delete=models.CASCADE)
+    store_member = models.ForeignKey(StoreMember, on_delete=models.CASCADE, null=True, blank=True)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE)
     cover_shift = models.BooleanField(default=False)
     alternative_staff = models.ForeignKey(Members, on_delete=models.SET_NULL, null=True, blank=True, related_name='cover_shift')
@@ -115,6 +173,9 @@ class StaffShift(models.Model):
     undefined_3 = models.CharField(blank=True, max_length=200)
     undefined_4 = models.CharField(blank=True, max_length=200)
     undefined_5 = models.CharField(blank=True, max_length=200)
+
+    class Meta:
+        unique_together = ('shift_date', 'store_member', 'shift')
 
     def staff_position(self):
         if self.staff:

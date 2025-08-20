@@ -32,12 +32,20 @@ class ShiftAdmin(admin.ModelAdmin):
     daily_work_hours_display.short_description = "Daily Work Hours"
 
 
+
+'''
+因為開了第三張來做多店鋪管理
+員工的班表需要跟店 + 員工連結 
+所以不再是直接連結到 Members table
+而是改連到 StoreMember table 所以這裡也做變動
+'''
 @admin.register(StaffShift)
 class StaffShiftAdmin(admin.ModelAdmin):
     list_display = (
         "shift_date",
         "days",
-        "staff",
+        # "staff",
+        "store_member",
         "staff_position",
         "shift",
         "cover_shift",

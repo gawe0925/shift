@@ -19,7 +19,7 @@ from rest_framework.permissions import IsAuthenticated
 from .utils import calculate_end_date
 from .permissions import IsAdminOrReadyOnly
 from .tokens import FiveMinuteTokenGenerator
-from .models import Members, Shift, StaffShift, LeaveRequest, LeaveBalance, Wage
+from .models import Members, Shift, StaffShift, LeaveRequest, LeaveBalance, Wage, Stores, StoreMember
 from .serializer import MemberSerializer, ShiftSerializer, StaffShiftSerializer, LeaveRequestSerializer, LeaveBalanceSerializer, WageSerializer
 
 # universal function
@@ -28,6 +28,11 @@ def str_to_date(date_str):
         return datetime.strptime(date_str, "%Y-%m-%d").date()
     except:
         return False
+    
+
+class StoresViewSet(ModelViewSet):
+    queryset = Stores.objects.all()
+    # serializer_class
 
 
 class MemberViewSet(ModelViewSet):
