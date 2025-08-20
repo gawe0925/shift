@@ -120,14 +120,27 @@ WSGI_APPLICATION = 'shift.wsgi.application'
 # }
 
 # Database for deploey
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.environ.get('DB_NAME'),
+#         'USER': os.environ.get('DB_USER'),
+#         'PASSWORD': os.environ.get('DB_PASSWORD'),
+#         'HOST': os.environ.get('DB_HOST'),
+#         'PORT': os.environ.get('DB_PORT', '5432'),
+#     }
+# }
+
+import os
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': 'shift_database',   # 這裡是資料庫名稱
+        'USER': 'shift_database_user',   # 這裡是使用者帳號
+        'PASSWORD': 'vB4Bw833KnTfhY0TAbo7cy2Pyx9pfcEu',   # 這裡是密碼
+        'HOST': 'dpg-d2indfur433s73e0ad30-a.singapore-postgres.render.com',   # External Database host
+        'PORT': '5432',   # PostgreSQL 預設 port
     }
 }
 
@@ -167,6 +180,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
