@@ -29,12 +29,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-# ALLOWED_HOSTS = [
-#     'shift-cnkl.onrender.com', 
-#     'localhost', 
-#     '127.0.0.1'
-# ]
-
 
 # Application definition
 
@@ -59,7 +53,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -68,7 +61,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # CORS 設置
 CORS_ALLOWED_ORIGINS = [
@@ -194,13 +186,13 @@ EMAIL_HOST_USER = 'your_email@gmail.com'
 EMAIL_HOST_PASSWORD = 'your_app_password'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# CELERY's setting
-from django.conf import settings
-CELERY_TIMEZONE = 'Australia/Sydney'
+# # CELERY's setting
+# from django.conf import settings
+# CELERY_TIMEZONE = 'Australia/Sydney'
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-# 使用 Django 資料庫來儲存排程
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'
+# # 使用 Django 資料庫來儲存排程
+# CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
 
 # log's setting
 import os
