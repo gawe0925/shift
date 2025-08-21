@@ -7,7 +7,8 @@ from .models import Members, Shift, StaffShift, LeaveRequest, LeaveBalance, Wage
 
 
 class MemberSerializer(serializers.ModelSerializer):
-
+    password = serializers.CharField(write_only=True, required=False)
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -22,7 +23,7 @@ class MemberSerializer(serializers.ModelSerializer):
         model = Members
         fields = ['id', 'first_name', 'last_name', 'email', 'mobile',
                   'permanent_position', 'part_time_rate', 'position_type', 
-                  'is_active', 'is_staff', 'is_superuser']
+                  'is_active', 'is_staff', 'is_superuser', 'password']
         read_only_fields = ['id', 'is_superuser']
 
     def create(self, validated_data):
