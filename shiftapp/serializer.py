@@ -26,7 +26,7 @@ class MemberSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'is_superuser']
 
     def create(self, validated_data):
-        password = validated_data.get('password', None)
+        password = validated_data.pop('password', None)
         user = Members(**validated_data)
         if password:
             user.set_password(password)
@@ -47,7 +47,7 @@ class MemberSerializer(serializers.ModelSerializer):
                     "is_active": "Cannot deactivate yourself"
                 })
         
-        password = validated_data.get('password', None)
+        password = validated_data.pop('password', None)
         # 允許所有字段更新（移除之前可能的限制）
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
