@@ -24,7 +24,14 @@ class MemberSerializer(serializers.ModelSerializer):
                   'permanent_position', 'part_time_rate', 'position_type', 
                   'is_active', 'is_staff', 'is_superuser']
         read_only_fields = ['id', 'is_superuser']
-        
+
+    def create(self, validated_data):
+        password = validated_data.get('password', None)
+        user = Members(**validated_data)
+        if password:
+            user.set_password(password)
+        user.save()
+        return user
 
     def update(self, instance, validated_data):
         requested_user = self.context['request'].user
@@ -40,10 +47,13 @@ class MemberSerializer(serializers.ModelSerializer):
                     "is_active": "Cannot deactivate yourself"
                 })
         
+        password = validated_data.get('password', None)
         # 允許所有字段更新（移除之前可能的限制）
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         
+        if password:
+            instance.set_password(password)
         instance.save()
         return instance
 
