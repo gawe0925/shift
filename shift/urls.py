@@ -18,7 +18,7 @@ router.register('wage', WageViewSet, basename='wage')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include(router.urls)),
+    path('api/', include(router.urls)),
     
     # JWT 認證端點
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
