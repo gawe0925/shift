@@ -1,7 +1,10 @@
+English Version
 Overview
 
 Shift is a lightweight and flexible scheduling management web application designed to help teams manage shifts, track workloads, and improve collaboration efficiency.
-It’s built with Django on the backend, and currently deployed on both Render and AWS, serving as a full-stack project demonstration for portfolio and career development purposes.
+
+The project features a Django backend and a React frontend (generated and refined with AI assistance).
+It is currently deployed on both Render and AWS, serving as a full-stack portfolio project to demonstrate development, deployment, and cloud integration skills.
 
 Features
 
@@ -9,9 +12,11 @@ Features
 
 👥 Manage team members and roles
 
-🔔 View daily/weekly schedules
+🔔 View daily and weekly schedules
 
-🌐 Django-based backend API
+🧠 React frontend developed with AI assistance
+
+🌐 Django REST API backend
 
 ☁️ Deployed to both Render and AWS
 
@@ -21,22 +26,21 @@ Deployment
 
 ⚙️ AWS: Backend deployed successfully; frontend integration in progress
 
-🎯 Goal: Connect both ends and achieve full-stack integration within this week
+🎯 Goal: Complete React frontend connection to AWS backend this week
 
-🔗 A live demo link will be added once the AWS frontend is fully connected.
+🔗 A live demo link will be added once the AWS frontend integration is complete.
 
 Tech Stack
 Category	Technology
-Backend	Python (Django)
+Frontend	React (AI-assisted development)
+Backend	Python (Django REST Framework)
 Database	SQLite (configurable to PostgreSQL / MySQL)
-Frontend	HTML, CSS, Django Template (frontend framework in development)
-Deployment	Render, AWS EC2 / S3 / Elastic Beanstalk
-
-Testing
-Currently, there are no automated tests implemented.
-Future updates may include unit and integration tests using Django’s built-in framework.
+Deployment	Render, AWS EC2 / S3
+Others	Git, GitHub, Python Virtual Environment
 
 Purpose
 I currently work at a pharmacy, where the manager still manually creates shift schedules using Excel.
-I realized there should be a faster and more automated solution — so I built Shift to address that pain point.
-Although there are already many existing scheduling apps available, I wanted to develop my own version to both solve a real problem and strengthen my skills by building a complete side project from scratch.
+I realized there should be a faster and more automated solution — so I built Shift to address that real-world pain point.
+
+Although there are many existing scheduling apps, I wanted to create my own version from scratch, both to solve a real problem and to gain experience in full-stack and cloud deployment.
+The React frontend was generated and iteratively refined with AI assistance, allowing me to explore how AI can accelerate modern web development.
