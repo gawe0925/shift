@@ -1,4 +1,3 @@
-English Version
 Overview
 
 Shift is a lightweight and flexible scheduling management web application designed to help teams manage shifts, track workloads, and improve collaboration efficiency.
