@@ -36,14 +36,6 @@ Testing
 Currently, there are no automated tests implemented.
 Future updates may include unit and integration tests using Django’s built-in framework.
 
-Project Structure
-shift/
- ├── shift/              # Django project core settings
- ├── shiftapp/           # Main app logic
- ├── db.sqlite3          # Default database
- ├── manage.py           # Django management entry point
- └── requirements.txt    # Dependencies
-
 Purpose
 I currently work at a pharmacy, where the manager still manually creates shift schedules using Excel.
 I realized there should be a faster and more automated solution — so I built Shift to address that pain point.
