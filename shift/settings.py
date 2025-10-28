@@ -64,12 +64,12 @@ MIDDLEWARE = [
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# CORS 設置
-CORS_ALLOWED_ORIGINS = [
-    "https://d1dw2l26sypvjv.cloudfront.net",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+# # CORS 設置
+# CORS_ALLOWED_ORIGINS = [
+#     "https://d1dw2l26sypvjv.cloudfront.net",
+#     "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+# ]
 
 CORS_ALLOW_CREDENTIALS = True
 
