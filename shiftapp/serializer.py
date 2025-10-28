@@ -29,11 +29,10 @@ class MemberSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # 找出 Demo 的 manager account 禁止 Demo 帳號去新增 User
         requested_user = self.context['request'].user
-        if requested_user.email == 'manager@shift.com':
+        if requested_user.email == 'manager@shift.com' and not requested_user.is_superuser:
             raise serializers.ValidationError({
-                "prohibited": "Demo account cannot create new member"
+                "error": "Demo account cannot create new member"
             })
-
 
         password = validated_data.pop('password', None)
         user = Members(**validated_data)
