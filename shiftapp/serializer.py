@@ -27,6 +27,7 @@ class MemberSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'is_superuser']
 
     def create(self, validated_data):
+        print("Serializer create called")
         # 找出 Demo 的 manager account 禁止 Demo 帳號去新增 User
         requested_user = self.context['request'].user
         if requested_user.email == 'manager@shift.com' and not requested_user.is_superuser:
@@ -35,6 +36,8 @@ class MemberSerializer(serializers.ModelSerializer):
             })
 
         password = validated_data.pop('password', None)
+
+        print("Email:", validated_data.get('email'))
         
         if not validated_data.get('username'):
             validated_data['username'] = validated_data.get('email')
