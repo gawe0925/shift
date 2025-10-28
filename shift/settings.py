@@ -42,7 +42,7 @@ INSTALLED_APPS = [
 
     'django_celery_beat',
 
-    # 'corsheaders',
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
 
@@ -51,7 +51,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    # 'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -64,29 +64,29 @@ MIDDLEWARE = [
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# # CORS 設置
-# CORS_ALLOWED_ORIGINS = [
-#     "https://d1dw2l26sypvjv.cloudfront.net",
-#     "http://localhost:3000", #dev
-#     "http://127.0.0.1:3000", #dev
-# ]
+# CORS 設置
+CORS_ALLOWED_ORIGINS = [
+    "https://d1dw2l26sypvjv.cloudfront.net",
+    "http://localhost:3000", #dev
+    "http://127.0.0.1:3000", #dev
+]
 
-# CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
 
-# CORS_ALLOW_HEADERS = [
-#     'content-type',
-#     'authorization',
-#     'x-requested-with',
-# ]
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'authorization',
+    'x-requested-with',
+]
 
-# CORS_ALLOW_METHODS = [
-#     'GET',
-#     'POST',
-#     'PUT',
-#     'PATCH',
-#     'DELETE',
-#     'OPTIONS'
-# ]
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS'
+]
 
 
 # JWT 設置
