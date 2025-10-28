@@ -35,8 +35,10 @@ class MemberSerializer(serializers.ModelSerializer):
             })
 
         password = validated_data.pop('password', None)
-        validated_data['username'] = validated_data.get('email')
         
+        if not validated_data.get('username'):
+            validated_data['username'] = validated_data.get('email')
+
         user = Members(**validated_data)
         if password:
             user.set_password(password)
