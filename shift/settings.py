@@ -73,6 +73,9 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+# 讓前端可以 cross 進來後端
+CORS_ALLOW_ALL_ORIGINS = True
+
 # JWT 設置
 from datetime import timedelta
 
