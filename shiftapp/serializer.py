@@ -13,6 +13,10 @@ class MemberSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
 
         request = self.context.get('request', None)
+        # if there is no request,then skip this part
+        if not request or not hasattr(request, 'user'):
+            return
+
         user = request.user
         part_time_staff = Members.objects.filter(id=user.id, position_type='part').first()
 
@@ -26,8 +30,22 @@ class MemberSerializer(serializers.ModelSerializer):
                   'is_active', 'is_staff', 'is_superuser', 'password']
         read_only_fields = ['id', 'is_superuser']
 
-    def create(self, validated_data):
+    # to prevent demo account create new user
+    def validate(self, attrs):
+        request = self.context['request']
+        user = getattr(request, 'user', None)
+
+        if user and user.email == 'manager@shift.com':
+            raise serializers.ValidationError('Demo account cannot create new user')
+        
+        return attrs
+
+    def create(self, validated_data):        
         password = validated_data.pop('password', None)
+
+        if not validated_data.get('username'):
+            validated_data['username'] = validated_data.get('email')
+
         user = Members(**validated_data)
         if password:
             user.set_password(password)

@@ -40,20 +40,9 @@ class Members(AbstractUser):
     undefined_4 = models.CharField(blank=True, max_length=200)
     undefined_5 = models.CharField(blank=True, max_length=200)
 
-
     def __str__(self):
         name = f"{self.first_name} {self.last_name}".strip()
         return name if name else self.email
-    
-    def save(self, *args, **kwargs):
-        if not self.username:
-            self.username = self.email
-
-        if getattr(self, 'is_new', False):
-            if not self.is_superuser:
-                raise ValueError("Demo account cannot create new member")
-        
-        super().save(*args, **kwargs)
 
 
 """
