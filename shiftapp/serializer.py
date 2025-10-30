@@ -5,6 +5,8 @@ from rest_framework import serializers
 from datetime import datetime, timedelta
 from .models import Members, Shift, StaffShift, LeaveRequest, LeaveBalance, Wage
 
+VALID_POSITIONS = ['full', 'part']
+
 
 class MemberSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
@@ -46,6 +48,15 @@ class MemberSerializer(serializers.ModelSerializer):
         if not validated_data.get('username'):
             validated_data['username'] = validated_data.get('email')
 
+        position_type = getattr(validated_data, 'position_type', None)
+        if position_type: 
+            if position_type in VALID_POSITIONS:
+                # fulltime and part time would needs start date to calculate annual leaves
+                validated_data['start_date'] = datetime.today().date()
+            else:
+                # casual pay rate times 1.25
+                validated_data['pay_rate'] = round(Decimal(26.55*1.25), 2)
+
         user = Members(**validated_data)
         if password:
             user.set_password(password)
@@ -65,6 +76,32 @@ class MemberSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "is_active": "Cannot deactivate yourself"
                 })
+        
+        new_position = getattr(validated_data, 'position_type', None)
+        current_position = instance.position_tpye
+
+        # when staff's is_active status updated to update relative fields 
+        if hasattr(validated_data, 'is_active'):
+            is_active = validated_data.get('is_active')
+            if not is_active and instance.is_active:
+                validated_data['end_date'] = datetime.today().date()
+                validated_data['start_date'] = None
+                validated_data['pay_rate'] = Decimal(0.0)
+            else:
+                # back to active, set end_date to be None
+                validated_data['end_date'] = None
+                if new_position in VALID_POSITIONS:
+                    validated_data['start_date'] = datetime.today().date()
+                    validated_data['pay_rate'] = Decimal(26.55)
+        
+        # full time and part time staff
+        if current_position not in VALID_POSITIONS and new_position in VALID_POSITIONS:
+            validated_data['pay_rate'] = Decimal(26.55)
+            validated_data['start_date'] = datetime.today().date()
+        # casual staff
+        elif new_position and current_position in VALID_POSITIONS and new_position not in VALID_POSITIONS:
+            validated_data['start_date'] = None
+            validated_data['pay_rate'] = round(Decimal(26.55*1.25), 2)
         
         password = validated_data.pop('password', None)
         # 允許所有字段更新（移除之前可能的限制）
