@@ -46,7 +46,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
 
-    'shiftapp',
+    # 'shiftapp',
+    """
+    In order to load signals.py, so needs to change settings
+    this setting will registered shiftapp and load signals.py when processing
+    """  
     'shiftapp.apps.ShiftappConfig',
 
 ]
